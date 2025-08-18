@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MFI Credit Grading Calculator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+  <div class="max-w-6xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6 text-center">MFI Credit Grading Calculator</h1>
+
+    <form id="kpiForm" class="space-y-8"></form>
+
+    <div class="text-center mt-10">
+      <button type="button" onclick="calculateScore()" class="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700">Calculate Score</button>
+    </div>
+
+    <div id="result" class="mt-8 text-center text-xl font-semibold"></div>
+  </div>
+
+  <script>
+    // Extracted KPI structure from Excel (Dimension -> Sub-Parameter -> KPIs)
+    const kpiData = [
+     {
+        "dimension": "Financial Performance",
+        "subparams": [
+          {
+            "name": "Credit Risk",
+            "kpis": [
+              { "name": "PAR > 30 days", "weight": 0.05 },
+              { "name": "Write-off Ratio", "weight": 0.03 }
+            ]
+          },
+          {
+            "name": "Market Position",
+            "kpis": [
+              { "name": "Client Outreach Growth", "weight": 0.02 },
+              { "name": "Market Share", "weight": 0.03 }
+            ]
+          },
+          {
+            "name": "Profitability & Sustainability",
+            "kpis": [
+              { "name": "RoA", "weight": 0.04 },
+              { "name": "RoE", "weight": 0.05 }
+              { "name": "OSS", "weight": 0.06 }
+            ]
+          }
+        ]
+      },
+      {
+        "dimension": "Refinancing & Liquidity",
+        "subparams": [
+          {
+            "name": "Reputation",
+            "kpis": [
+              { "name": "Credit Rating History", "weight": 0.03 }
+            ]
+          },
+          {
+            "name": "Diversification",
+            "kpis": [
+              { "name": "Borrowing Score Mix", "weight": 0.03 }
+            ]
+          },
+          {
+            "name": "Liquidity Management",
+            "kpis": [
+              { "name": "Liquidity Coverage Ratio", "weight": 0.04 }
+            ]
+          }
+        ]
+      },
+      {
+        "dimension": "Governance & Management",
+        "subparams": [
+          {
+            "name": "Board Effectiveness",
+            "kpis": [
+              { "name": "Board Diversity", "weight": 0.01 },
+              { "name": "Meeting Frequency", "weight": 0.01 }
+            ]
+          },
+          {
+            "name": "Management Experience",
+            "kpis": [
+              { "name": "Years in Microfinance", "weight": 0.02 },
+              { "name": "Crisis Management", "weight": 0.01 },
+            ]
+          },
+          {
+            "name": "Internal Controls",
+            "kpis": [
+              { "name": "Audit Compliance", "weight": 0.02 },
+              { "name": "Fraud Incidents", "weight": 0.03 },
+            ]
+          }
+        ]
+      },
+      {
+        "dimension": "Client Outreach & Social Impact",
+        "subparams": [
+          {
+            "name": "Population Segment Served",
+            "kpis": [
+              { "name": "% Rural, % Semi-urban, % Urban", "weight": 0.03 }
+            ]
+          },
+          {
+            "name": "Poverty Outreach",
+            "kpis": [
+              { "name": "% Clients Below National Poverty Line", "weight": 0.06 }
+            ]
+          }
+          {
+            "name": "Women Empowerment",
+            "kpis": [
+              { "name": "% Female Borrowers; Women-led Enterprises Financed", "weight": 0.06 }
+            ]
+          }
+          {
+            "name": "Financial Inclusion",
+            "kpis": [
+              { "name": "First-time Borrowers", "weight": 0.04 },
+              { "name": "New-to-Credit Customers", "weight": 0.04 }
+            ]
+          }
+        ]
+      },
+      {
+        "dimension": "Operational Efficiency",
+        "subparams": [
+          {
+            "name": "Cost Efficiency",
+            "kpis": [
+              { "name": "Operating Expense Ratio", "weight": 0.05 }
+            ]
+          },
+          {
+            "name": "Technology Adoption",
+            "kpis": [
+              { "name": "% Transactions Digitized", "weight": 0.03 },
+              { "name": "Mobile App Penetration", "weight": 0.02 }
+            ]
+          },
+          {
+            "name": "Branch Network Productivity",
+            "kpis": [
+              { "name": "Clients per Branch", "weight": 0.01 },
+              { "name": "Loans per Loan Officer", "weight": 0.02 }
+            ]
+          }
+        ]
+      }
+      {
+        "dimension": "External Environment & Resilience",
+        "subparams": [
+          {
+            "name": "Type of Economy",
+            "kpis": [
+              { "name": "Stage of Economic Development", "weight": 0.01 },
+              { "name": "GDP per Capita of Region", "weight": 0.01 },
+              { "name": "Economic Stability Index", "weight": 0.01 }
+            ]
+          },
+          {
+            "name": "Population Characteristics",
+            "kpis": [
+              { "name": "Literacy Rate", "weight": 0.02 },
+              { "name": "Employment Rate", "weight": 0.02 },
+              { "name": "Gender Ratio", "weight": 0.02 }
+            ]
+          },
+          {
+            "name": "Infrastructure Availability",
+            "kpis": [
+              { "name": "Access to Banking", "weight": 0.01 },
+              { "name": "Internet Penetration", "weight": 0.02 }
+            ]
+          },
+          {
+            "name": "Regulatory Environment",
+            "kpis": [
+              { "name": "Ease of Doing Business", "weight": 0.02 },
+              { "name": "Regulatory Support Score", "weight": 0.02 }
+            ]
+          }
+        ]
+      }
+    ];
+
+    // Build the form dynamically
+    const form = document.getElementById("kpiForm");
+    kpiData.forEach(dim => {
+      const dimDiv = document.createElement("div");
+      dimDiv.className = "bg-white p-4 rounded-lg shadow";
+      dimDiv.innerHTML = `<h2 class='text-2xl font-bold mb-4'>${dim.dimension}</h2>`;
+
+      dim.subparams.forEach(sub => {
+        const subDiv = document.createElement("div");
+        subDiv.className = "mb-6";
+        subDiv.innerHTML = `<h3 class='text-lg font-semibold mb-2 text-gray-700'>${sub.name}</h3>`;
+
+        sub.kpis.forEach((kpi, idx) => {
+          const kpiId = `${dim.dimension}-${sub.name}-${idx}`.replace(/\s+/g, '_');
+          const kpiRow = document.createElement("div");
+          kpiRow.className = "flex justify-between items-center mb-2";
+          kpiRow.innerHTML = `
+            <label for="${kpiId}" class="flex-1">${kpi.name} (Weight: ${(kpi.weight*100).toFixed(1)}%)</label>
+            <select id="${kpiId}" data-weight="${kpi.weight}" class="ml-4 border rounded p-1">
+              <option value="">--</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          `;
+          subDiv.appendChild(kpiRow);
+        });
+
+        dimDiv.appendChild(subDiv);
+      });
+
+      form.appendChild(dimDiv);
+    });
+
+    // Score Calculation
+    function calculateScore() {
+      let totalWeighted = 0;
+      let totalWeight = 0;
+
+      document.querySelectorAll("select[data-weight]").forEach(sel => {
+        const val = parseFloat(sel.value);
+        const weight = parseFloat(sel.dataset.weight);
+        if (!isNaN(val)) {
+          totalWeighted += val * weight;
+          totalWeight += weight;
+        }
+      });
+
+      const finalScore = totalWeighted / totalWeight;
+
+      let category = "";
+      if (finalScore >= 4.5) category = "Excellent";
+      else if (finalScore >= 3.5) category = "Strong";
+      else if (finalScore >= 2.5) category = "Moderate";
+      else if (finalScore >= 1.5) category = "Weak";
+      else category = "Poor";
+
+      document.getElementById("result").innerHTML = `Final Score: ${finalScore.toFixed(2)} → <span class='text-blue-700'>${category}</span>`;
+    }
+  </script>
+</body>
+</html>
